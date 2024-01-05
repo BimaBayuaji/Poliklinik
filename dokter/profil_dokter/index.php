@@ -40,6 +40,23 @@ if (!isset($_SESSION['dokter_authenticated']) || !$_SESSION['dokter_authenticate
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
+  <?php
+  require_once("../../connection.php");
+  if (isset($_POST['editDokter'])) {
+    $idDokter = $_SESSION['id_dokter'];
+    $nama = $_POST['nama'];
+    $alamat = $_POST['alamat'];
+    $no_hp = $_POST['no_hp'];
+    $id_poli = $_POST['id_poli'];
+    $password = $_POST['password'];
+    $query = mysqli_query($conn, "UPDATE dokter SET nama = '$nama', alamat = '$alamat', no_hp = '$no_hp', id_poli = '$id_poli', password = '$password' WHERE id = $idDokter");
+    if ($query) {
+      header('Refresh:0');
+    } else {
+      header('Refresh:0');
+    }
+  };
+  ?>
   <div class="wrapper">
 
     <!-- Preloader -->
@@ -122,7 +139,7 @@ if (!isset($_SESSION['dokter_authenticated']) || !$_SESSION['dokter_authenticate
         <div class="container-fluid">
           <div class="row mb-2">
             <div class="col-sm-6">
-              <h1 class="m-0">Riwayat Pasien</h1>
+              <h1 class="m-0">Profil Dokter</h1>
             </div><!-- /.col -->
           </div><!-- /.row -->
         </div><!-- /.container-fluid -->
@@ -131,55 +148,54 @@ if (!isset($_SESSION['dokter_authenticated']) || !$_SESSION['dokter_authenticate
       <!-- Main content -->
       <section class="content">
         <div class="container-fluid">
-          <div class="row">
-            <div class="col-12">
-              <div class="card">
-                <div class="card-body table-responsive p-0">
-                  <table class="table table-hover">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>Tanggal Periksa</th>
-                        <th>Nomor RM</th>
-                        <th>Nama Pasien</th>
-                        <th>Keluhan</th>
-                        <th>Obat</th>
-                        <th>Biaya</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <?php
-                      require_once("../../connection.php");
-                      $id_dokter = $_SESSION['id_dokter'];
-                      $query = mysqli_query($conn, "SELECT detail_periksa.id, DATE_FORMAT(periksa.tgl_periksa, '%d/%m/%Y') as tgl_periksa, pasien.no_rm, pasien.nama, daftar_poli.keluhan, obat.nama_obat, periksa.biaya_periksa, periksa.catatan FROM detail_periksa JOIN periksa ON detail_periksa.id_periksa = periksa.id JOIN daftar_poli ON periksa.id_daftar_poli = daftar_poli.id JOIN jadwal_periksa ON daftar_poli.id_jadwal = jadwal_periksa.id JOIN dokter ON jadwal_periksa.id_dokter = dokter.id JOIN pasien ON daftar_poli.id_pasien = pasien.id JOIN obat ON detail_periksa.id_obat = obat.id WHERE dokter.id = $id_dokter");
-                      $no = 1;
-                      ?>
-                      <?php while ($row = mysqli_fetch_array($query)) : ?>
-                        <tr data-widget="expandable-table" aria-expanded="false">
-                          <td><?php echo $no ?></td>
-                          <td><?php echo $row['tgl_periksa'] ?></td>
-                          <td><?php echo $row['no_rm'] ?></td>
-                          <td><?php echo $row['nama'] ?></td>
-                          <td><?php echo $row['keluhan'] ?></td>
-                          <td><?php echo $row['nama_obat'] ?></td>
-                          <td><?php echo 'Rp ', number_format($row['biaya_periksa'], 2, ",", ".") ?></td>
-                        </tr>
-                        <tr class="expandable-body">
-                          <td colspan="7">
-                            <h5 style="margin: 10px 0px 0px 10px"><b>Catatan Periksa</b></h5>
-                            <p style="margin-top: 0px;">
-                              <?php echo $row['catatan'] ?>
-                            </p>
-                          </td>
-                        </tr>
-                        <?php $no++ ?>
-                      <?php endwhile ?>
-                    </tbody>
-                  </table>
+          <div class="card">
+            <div class="card-body">
+              <?php
+              require_once("../../connection.php");
+              $id_dokter = $_SESSION['id_dokter'];
+              $queryDokter = mysqli_query($conn, "SELECT * FROM dokter WHERE id = $id_dokter");
+              $dataDokter = mysqli_fetch_assoc($queryDokter);
+              $queryPoli = mysqli_query($conn, "SELECT * FROM poli");
+              while ($item = mysqli_fetch_array($queryPoli)) {
+                $poli[] = $item;
+              }
+              ?>
+              <form action="../profil_dokter/" method="post">
+                <div class="form-group">
+                  <label for="nama">Nama</label>
+                  <input required value="<?php echo $dataDokter['nama'] ?>" name="nama" type="text" class="form-control" id="nama" placeholder="Nama Lengkap" />
                 </div>
-                <!-- /.card-body -->
-              </div>
-              <!-- /.card -->
+                <div class="form-group">
+                  <label for="alamat">Alamat Tempat Tinggal</label>
+                  <input required value="<?php echo $dataDokter['alamat'] ?>" name="alamat" type="text" class="form-control" id="alamat" placeholder="Alamat Tempat Tinggal" />
+                </div>
+                <div class="form-group">
+                  <label for="no_hp">Nomor HP</label>
+                  <input required value="<?php echo $dataDokter['no_hp'] ?>" name="no_hp" type="text" class="form-control" id="no_hp" placeholder="Nomor KTP" />
+                </div>
+                <div class="form-group">
+                  <label for="id_poli">Poli</label>
+                  <select required name="id_poli" class="custom-select rounded-0" id="id_poli">
+                    <option value="">-------</option>
+                    <?php foreach ($poli as $item) : ?>
+                      <?php if ($item['id'] == $dataDokter['id_poli']) : ?>
+                        <option selected <?php  ?> value="<?php echo $item['id'] ?>"><?php echo $item['nama_poli'] ?></option>
+                      <?php else : ?>
+                        <option <?php  ?> value="<?php echo $item['id'] ?>"><?php echo $item['nama_poli'] ?></option>
+                      <?php endif ?>
+                    <?php endforeach ?>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="password">Password</label>
+                  <input required name="password" value="<?php echo $dataDokter['password'] ?>" type="password" class="form-control" id="password" placeholder="Password" />
+                </div>
+                <div class="row">
+                  <div class="col">
+                    <input type="submit" name="editDokter" value="Edit" class="btn btn-primary" />
+                  </div>
+                </div>
+              </form>
             </div>
           </div>
         </div><!-- /.container-fluid -->
@@ -225,22 +241,6 @@ if (!isset($_SESSION['dokter_authenticated']) || !$_SESSION['dokter_authenticate
   <script src="../../dist/js/demo.js"></script>
   <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
   <script src="../../dist/js/pages/dashboard.js"></script>
-  <script>
-    $(function() {
-      //Initialize Select2 Elements
-      $('.select2').select2()
-
-      //Initialize Select2 Elements
-      $('.select2bs4').select2({
-        theme: 'bootstrap4'
-      })
-      //Date picker
-      $('#tanggalperiksa').datetimepicker({
-        format: 'L',
-        minDate: moment().startOf('day'),
-      });
-    });
-  </script>
 </body>
 
 </html>

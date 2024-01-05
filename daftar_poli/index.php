@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pendaftaran - Poliklinik</title>
+  <title>Poliklinik</title>
 
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -29,6 +29,39 @@
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
+  <?php
+  require("../connection.php");
+  if (isset($_POST['addDaftarPoli'])) {
+    $queryPasien = mysqli_query($conn, "SELECT * FROM pasien ORDER BY id ASC");
+    $no_rm = $_POST['no_rm'];
+    $keluhan = $_POST['keluhan'];
+    $poli = $_POST['poli'];
+    $id_jadwal = $_POST['id_jadwal'];
+    $nothing = false;
+    if (!$nothing) {
+      while ($row = mysqli_fetch_array($queryPasien)) {
+        if ($no_rm == $row['no_rm']) {
+          $id_pasien = $row['id'];
+          $query = mysqli_query($conn, "INSERT INTO daftar_poli (id_pasien, id_jadwal, keluhan) VALUES ('$id_pasien', '$id_jadwal', '$keluhan')");
+          if ($query) {
+            $lastInsertedID = mysqli_insert_id($conn);
+            $query2 = mysqli_query($conn, "SELECT * FROM daftar_poli WHERE id = $lastInsertedID");
+            if ($query2) {
+              $item = mysqli_fetch_assoc($query2);
+              $_SESSION['add_daftar_poli'] = array(
+                'no_antrian' => $item['no_antrian']
+              );
+            }
+          }
+          $error = null;
+          break;
+        } else {
+          $error = "Invalid credentials";
+        }
+      }
+    }
+  }
+  ?>
   <div class="wrapper">
 
     <!-- Navbar -->
@@ -93,49 +126,90 @@
 
       <!-- Main content -->
       <section class="content">
+        <?php if (isset($_SESSION['add_daftar_poli'])) : ?>
+          <div class="container-fluid">
+            <div class="card">
+              <div class="card-header">
+                <h4 class="card-title"><b>Pendaftaran Poli Berhasil!</b></h4>
+              </div>
+              <div class="card-body">
+                <dl>
+                  <dt>Nomor antrian anda</dt>
+                  <dd><?php echo $_SESSION['add_daftar_poli']['no_antrian'] ?></dd>
+                </dl>
+                <p class="text-danger font-italic"><b>Simpan Nomor Antrian anda!</b></p>
+              </div>
+            </div>
+          </div>
+          <?php unset($_SESSION['add_daftar_poli']); ?>
+        <?php endif ?>
+        <div class="container-fluid">
+          <div class="card">
+            <div class="card-header">
+              <h4 class="card-title text-danger"><b>Notice</b></h4>
+            </div>
+            <div class="card-body">
+              <p class="card-text">Untuk mendapatkan nomor rekam medis, harap untuk melakukan pendaftaran baru</p>
+              <a href="../daftar_baru/" class="btn btn-primary">Pendaftaran Baru</a>
+            </div>
+          </div>
+        </div>
         <div class="container-fluid">
           <div class="card">
             <div class="card-body">
-              <form>
+              <form action="../daftar_poli/" method="post">
                 <div class="form-group">
                   <label for="addRMPasien">Nomor Rekam Medis</label>
-                  <input type="text" class="form-control" id="addRMPasien" placeholder="ex: 202313-79" />
+                  <input required name="no_rm" type="text" class="form-control" id="addRMPasien" placeholder="ex: 202313-79" />
+                  <?php if (isset($error)) : ?>
+                    <p class="text-danger mt-2"><?php echo 'Nomor Rekam Medis salah' ?></p>
+                    <?php unset($error) ?>
+                  <?php endif; ?>
                 </div>
                 <div class="form-group">
                   <label>Keluhan</label>
-                  <textarea class="form-control" rows="3" placeholder="Keluhan"></textarea>
+                  <textarea name="keluhan" class="form-control" rows="3" placeholder="Keluhan"></textarea>
                 </div>
                 <div class="form-group">
                   <label for="addPoli">Pilih Poli</label>
-                  <select class="custom-select rounded-0" id="addPoli">
-                    <option>-------</option>
-                    <option>Poli Kesehatan</option>
+                  <?php
+                  require_once("../connection.php");
+                  $queryPoli = mysqli_query($conn, "SELECT * FROM poli");
+                  ?>
+                  <select required name="poli" class="custom-select rounded-0" id="addPoli">
+                    <option value="">-------</option>
+                    <?php while ($item = mysqli_fetch_array($queryPoli)) : ?>
+                      <option value="<?php echo $item['id'] ?>"><?php echo $item['nama_poli'] ?></option>
+                    <?php endwhile ?>
                   </select>
                 </div>
                 <div class="form-group">
-                  <label for="addPoli">Pilih Jadwal</label>
-                  <select class="custom-select rounded-0" id="addPoli">
-                    <option>-------</option>
-                    <option>Dr. Witch/ 10.00-17.00</option>
+                  <label for="addJadwal">Pilih Jadwal</label>
+                  <select required name="id_jadwal" class="custom-select rounded-0" id="addJadwal">
+                    <option value="">-------</option>
                   </select>
                 </div>
                 <div class="row">
                   <div class="col">
-                    <button type="submit" class="btn btn-primary">
-                      Simpan
-                    </button>
+                    <input type="submit" name="addDaftarPoli" value="Daftar" class="btn btn-primary" />
                   </div>
                 </div>
               </form>
             </div>
           </div>
-        </div><!-- /.container-fluid -->
+        </div>
       </section>
       <!-- /.content -->
     </div>
   </div>
   <!-- ./wrapper -->
 
+  <script>
+    // function OpenBootstrapPopup() {
+    //   $("#modal-success").modal('show');
+    // }
+    //
+  </script>
   <!-- jQuery -->
   <script src="../plugins/jquery/jquery.min.js"></script>
   <!-- jQuery UI 1.11.4 -->
@@ -170,6 +244,36 @@
   <script src="../dist/js/demo.js"></script>
   <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
   <script src="../dist/js/pages/dashboard.js"></script>
+  <script>
+    $(document).ready(function() {
+      $('#addPoli').change(function() {
+        var clickBtnValue = $(this).val();
+        $.ajax({
+          url: 'selectjadwal.php',
+          type: 'GET',
+          data: {
+            id: clickBtnValue
+          },
+          dataType: 'json',
+          success: function(data) {
+            console.log(data);
+            $('#addJadwal').empty()
+            $('#addJadwal').append($('<option value="">-------</option>'));
+            $.each(data, function(index, option) {
+              var optionElement = $('<option>', {
+                value: option.id,
+                text: option.hari + ', ' + option.jam_mulai.slice(0, 5) + '-' + option.jam_selesai.slice(0, 5) + ' / ' + option.nama
+              });
+              $('#addJadwal').append(optionElement);
+            });
+          },
+          error: function(error) {
+            console.log('Error fetching data: ' + error);
+          },
+        })
+      })
+    })
+  </script>
 </body>
 
 </html>

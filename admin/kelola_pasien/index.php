@@ -1,10 +1,20 @@
+<?php
+session_start();
+
+// Check if the user is not authenticated
+if (!isset($_SESSION['admin_authenticated']) || !$_SESSION['admin_authenticated']) {
+  header('Location: ../../login/');
+  exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin - Poliklinik</title>
+  <title>Poliklinik</title>
 
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -33,6 +43,48 @@
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
+  <?php
+  require("../../connection.php");
+  if (isset($_POST['addPasien'])) {
+    $nowYm = date("Ym");
+    $nama = $_POST['nama'];
+    $alamat = $_POST['alamat'];
+    $noKTP = $_POST['noKTP'];
+    $noHP = $_POST['noHP'];
+    $query = mysqli_query($conn, "INSERT INTO pasien (nama, alamat, no_ktp, no_hp) VALUES ('$nama', '$alamat', '$noKTP', '$noHP')");
+    if ($query) {
+      $lastPasienQuery = mysqli_query($conn, "SELECT * FROM pasien ORDER BY id DESC LIMIT 1");
+      $lastPasien = mysqli_fetch_assoc($lastPasienQuery);
+      $idLastPasien = $lastPasien['id'];
+      $query2 = mysqli_query($conn, "UPDATE pasien SET no_rm = '$nowYm-$idLastPasien' where id = $idLastPasien");
+      header('Refresh:0');
+    } else {
+      echo $query;
+    }
+  };
+  if (isset($_POST['editPasien'])) {
+    $idPasien = $_POST['idPasien'];
+    $nama = $_POST['nama'];
+    $alamat = $_POST['alamat'];
+    $noKTP = $_POST['noKTP'];
+    $noHP = $_POST['noHP'];
+    $query = mysqli_query($conn, "UPDATE pasien SET nama = '$nama', alamat = '$alamat', no_ktp = '$noKTP', no_hp = '$noHP' WHERE id = $idPasien");
+    if ($query) {
+      header('Refresh:0');
+    } else {
+      header('Refresh:0');
+    }
+  };
+  if (isset($_POST["hapusPasien"])) {
+    $idPasien = $_POST["hapusPasien"];
+    $query = mysqli_query($conn, "DELETE FROM pasien WHERE id = $idPasien");
+    if ($query) {
+      header('Refresh:0');
+    } else {
+      header('Refresh:0');
+    }
+  }
+  ?>
   <div class="wrapper">
     <!-- Navbar -->
     <nav class="main-header navbar navbar-expand navbar-white navbar-light">
@@ -51,7 +103,7 @@
       <a href="../../admin" class="brand-link">
         <img src="https://w7.pngwing.com/pngs/429/434/png-transparent-computer-icons-icon-design-business-administration-admin-icon-hand-monochrome-silhouette.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
         <!-- <i class="nav-icon fas fa-user-tie brand-image"></i> -->
-        <span class="brand-text font-weight-light">Halaman Admin</span>
+        <span class="brand-text font-weight-light">Admin</span>
       </a>
 
       <!-- Sidebar -->
@@ -99,12 +151,12 @@
       <div class="sidebar sidebar-custom">
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
           <li class="nav-item">
-            <a href="#" class="nav-link">
-              <i class="fas fa-right-from-bracket"></i>
-              <p>
-                Logout
-              </p>
-            </a>
+            <form method="post" action="../../login/logout.php">
+              <button class="btn nav-link btn-link text-dark d-flex justify-content-start align-items-center">
+                <i class="fas fa-right-from-bracket mr-1"></i>
+                <p>Logout</p>
+              </button>
+            </form>
           </li>
         </ul>
       </div>
@@ -131,7 +183,7 @@
               <div class="card">
                 <!-- /.card-header -->
                 <div class="card-body table-responsive p-0">
-                  <table class="table table-hover text-nowrap">
+                  <table class="table table-hover">
                     <thead>
                       <tr>
                         <th>#</th>
@@ -140,28 +192,34 @@
                         <th>Nomor KTP</th>
                         <th>Nomor HP</th>
                         <th>Nomor Rekam Medis</th>
-                        <th>Aksi</th>
+                        <th style="width: 160px;">Aksi</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td>1</td>
-                        <td>Hj. Phantom Assasin</td>
-                        <td>Jalan Safelane</td>
-                        <td>0/10/7</td>
-                        <td>088833331111</td>
-                        <td>202312-001</td>
-                        <td>
-                          <div class="margin">
-                            <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#modal-editDokter">
+                      <?php
+                      require_once("../../connection.php");
+                      $query = mysqli_query($conn, "SELECT * FROM pasien ORDER BY id ASC");
+                      $no = 1;
+                      ?>
+                      <?php while ($row = mysqli_fetch_array($query)) : ?>
+                        <tr>
+                          <td><?php echo $no ?></td>
+                          <td><?php echo $row['nama'] ?></td>
+                          <td><?php echo $row['alamat'] ?></td>
+                          <td><?php echo $row['no_ktp'] ?></td>
+                          <td><?php echo $row['no_hp'] ?></td>
+                          <td><?php echo $row['no_rm'] ?></td>
+                          <td>
+                            <button type="button" value="<?php echo $row['id'] ?>" class="buttonEdit2 btn btn-warning btn-block mb-2" data-toggle="modal" data-target="#modal-editDokter">
                               <i class="fa fa-pen"></i> Edit
                             </button>
-                            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal-sm">
+                            <button type="button" value="<?php echo $row['id'] ?>" class="buttonHapus2 btn btn-danger btn-block text-nowrap" data-toggle="modal" data-target="#modal-sm">
                               <i class="fa fa-trash"></i> Hapus
                             </button>
-                          </div>
-                        </td>
-                      </tr>
+                          </td>
+                        </tr>
+                        <?php $no++ ?>
+                      <?php endwhile ?>
                     </tbody>
                   </table>
                 </div>
@@ -193,7 +251,7 @@
               </div>
               <div class="modal-footer justify-content-between">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Tutup</button>
-                <button type="button" class="btn btn-danger toastrDefaultSuccess" data-dismiss="modal">Hapus</button>
+                <button type="button" class="buttonHapus btn btn-danger toastrDefaultSuccess" data-dismiss="modal">Hapus</button>
               </div>
             </div>
             <!-- /.modal-content -->
@@ -212,34 +270,28 @@
                 </button>
               </div>
               <div class="modal-body">
-                <form>
+                <form action="../../admin/kelola_pasien/" method="post">
                   <div class="form-group">
                     <label for="addNamaPasien">Nama</label>
-                    <input type="text" class="form-control" id="addNamaPasien" placeholder="Nama" />
+                    <input name="nama" type="text" class="form-control" id="addNamaPasien" placeholder="Nama" />
                   </div>
                   <div class="form-group">
                     <label for="addAlamatPasien">Alamat</label>
-                    <input type="text" class="form-control" id="addAlamatPasien" placeholder="Alamat" />
+                    <input name="alamat" type="text" class="form-control" id="addAlamatPasien" placeholder="Alamat" />
                   </div>
                   <div class="form-group">
                     <label for="addNoKTPPasien">Nomor KTP</label>
-                    <input type="text" class="form-control" id="addNoKTPPasien" placeholder="Nomor KTP" />
+                    <input name="noKTP" type="text" class="form-control" id="addNoKTPPasien" placeholder="Nomor KTP" />
                   </div>
                   <div class="form-group">
                     <label for="addNoHPPasien">Nomor HP</label>
-                    <input type="text" class="form-control" id="addNoHPPasien" placeholder="Nomor HP" />
-                  </div>
-                  <div class="form-group">
-                    <label for="addNoRMPasien">Nomor Rekam Medis</label>
-                    <input type="text" class="form-control" id="addNoRMPasien" placeholder="Nomor Rekam Medis" />
+                    <input name="noHP" type="text" class="form-control" id="addNoHPPasien" placeholder="Nomor HP" />
                   </div>
                   <div class="card-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">
                       Tutup
                     </button>
-                    <button type="submit" class="btn btn-primary float-right">
-                      Tambah
-                    </button>
+                    <input type="submit" name="addPasien" value="Tambah" class="btn btn-primary float-right" />
                   </div>
                 </form>
               </div>
@@ -260,34 +312,36 @@
                 </button>
               </div>
               <div class="modal-body">
-                <form>
+                <form action="../../admin/kelola_pasien/" method="post">
                   <div class="form-group">
-                    <label for="addNamaPasien">Nama</label>
-                    <input type="text" class="form-control" id="addNamaPasien" placeholder="Nama" value="Hj. Phantom Assasin" />
+                    <label for="idPasien">ID</label>
+                    <input name="idPasien" type="text" class="form-control" id="idPasien" placeholder="ID Pasien" readonly />
                   </div>
                   <div class="form-group">
-                    <label for="addAlamatPasien">Alamat</label>
-                    <input type="text" class="form-control" id="addAlamatPasien" placeholder="Alamat" value="Jalan Safelane" />
+                    <label for="editNamaPasien">Nama</label>
+                    <input name="nama" type="text" class="form-control" id="editNamaPasien" placeholder="Nama" />
                   </div>
                   <div class="form-group">
-                    <label for="addNoKTPPasien">Nomor KTP</label>
-                    <input type="text" class="form-control" id="addNoKTPPasien" placeholder="Nomor KTP" value="0/10/7" />
+                    <label for="editAlamatPasien">Alamat</label>
+                    <input name="alamat" type="text" class="form-control" id="editAlamatPasien" placeholder="Alamat" />
                   </div>
                   <div class="form-group">
-                    <label for="addNoHPPasien">Nomor HP</label>
-                    <input type="text" class="form-control" id="addNoHPPasien" placeholder="Nomor HP" value="0812345678" />
+                    <label for="editNoKTPPasien">Nomor KTP</label>
+                    <input name="noKTP" type="text" class="form-control" id="editNoKTPPasien" placeholder="Nomor KTP" value="6969" />
                   </div>
                   <div class="form-group">
-                    <label for="addNoRMPasien">Nomor Rekam Medis</label>
-                    <input type="text" class="form-control" id="addNoRMPasien" placeholder="Nomor Rekam Medis" value="202312-001" />
+                    <label for="editNoHPPasien">Nomor HP</label>
+                    <input name="noHP" type="text" class="form-control" id="editNoHPPasien" placeholder="Nomor HP" />
+                  </div>
+                  <div class="form-group">
+                    <label for="editNoRMPasien">Nomor Rekam Medis</label>
+                    <input type="text" class="form-control" id="editNoRMPasien" placeholder="Nomor Rekam Medis" readonly />
                   </div>
                   <div class="card-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">
                       Tutup
                     </button>
-                    <button type="submit" class="btn btn-warning float-right">
-                      Edit
-                    </button>
+                    <input type="submit" name="editPasien" value="Edit" class="buttonEdit btn btn-warning float-right" />
                   </div>
                 </form>
               </div>
@@ -317,11 +371,50 @@
   <!-- SweetAlert2 -->
   <script src="../../plugins/sweetalert2/sweetalert2.min.js"></script>
   <script>
+    var selectedId = 0;
     $(function() {
       $('.toastrDefaultSuccess').click(function() {
         toastr.success('Item berhasil dihapus')
       });
     });
+    $('.buttonHapus2').click(function() {
+      selectedId = $(this).val();
+      console.log(selectedId);
+    })
+    $('.buttonEdit2').click(function() {
+      selectedId = $(this).val();
+      $.ajax({
+        url: 'pasienJSON.php',
+        type: 'GET',
+        data: {
+          id: selectedId
+        },
+        dataType: 'json',
+        success: function(data) {
+          $('#idPasien').val(data.id);
+          $('#editNamaPasien').val(data.nama);
+          $('#editAlamatPasien').val(data.alamat);
+          $('#editNoKTPPasien').val(data.no_ktp);
+          $('#editNoHPPasien').val(data.no_hp);
+          $('#editNoRMPasien').val(data.no_rm);
+          console.log(data);
+        },
+        error: function(error) {
+          console.log('Error fetching data: ' + error);
+        },
+      })
+      console.log(selectedId);
+    })
+    $('.buttonHapus').click(function() {
+      var clickBtnValue = selectedId;
+      var ajaxurl = '../../admin/kelola_pasien/';
+      data = {
+        'hapusPasien': clickBtnValue
+      };
+      $.post(ajaxurl, data, function(response) {
+        location.reload();
+      });
+    })
   </script>
 </body>
 

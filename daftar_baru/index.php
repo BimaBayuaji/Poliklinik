@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pendaftaran - Poliklinik</title>
+  <title>Poliklinik</title>
 
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -29,6 +29,34 @@
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
+  <?php
+  require("../connection.php");
+  if (isset($_POST['addPasien'])) {
+    $nowYm = date("Ym");
+    $nama = $_POST['nama'];
+    $alamat = $_POST['alamat'];
+    $noKTP = $_POST['no_ktp'];
+    $noHP = $_POST['no_hp'];
+    $query = mysqli_query($conn, "INSERT INTO pasien (nama, alamat, no_ktp, no_hp) VALUES ('$nama', '$alamat', '$noKTP', '$noHP')");
+    if ($query) {
+      $lastPasienQuery = mysqli_query($conn, "SELECT * FROM pasien ORDER BY id DESC LIMIT 1");
+      $lastPasien = mysqli_fetch_assoc($lastPasienQuery);
+      $idLastPasien = $lastPasien['id'];
+      $query2 = mysqli_query($conn, "UPDATE pasien SET no_rm = '$nowYm-$idLastPasien' where id = $idLastPasien");
+      if ($query2) {
+        $_SESSION['add_pasien'] = array(
+          'nama' => $nama,
+          'alamat' => $alamat,
+          'no_ktp' => $noKTP,
+          'no_hp' => $noHP,
+          'no_rm' => $nowYm . '-' . $idLastPasien,
+        );
+      }
+    } else {
+      header('Refresh:0');
+    }
+  }
+  ?>
   <div class="wrapper">
 
     <!-- Navbar -->
@@ -93,36 +121,60 @@
 
       <!-- Main content -->
       <section class="content">
+        <?php if (isset($_SESSION['add_pasien'])) : ?>
+          <div class="container-fluid">
+            <div class="card">
+              <div class="card-header">
+                <h4 class="card-title"><b>Pendaftaran Berhasil!</b></h4>
+              </div>
+              <div class="card-body">
+                <dl>
+                  <dt>Nama</dt>
+                  <dd><?php echo $_SESSION['add_pasien']['nama'] ?></dd>
+                  <dt>Alamat</dt>
+                  <dd><?php echo $_SESSION['add_pasien']['alamat'] ?></dd>
+                  <dt>Nomor KTP</dt>
+                  <dd><?php echo $_SESSION['add_pasien']['no_ktp'] ?></dd>
+                  <dt>Nomor HP</dt>
+                  <dd><?php echo $_SESSION['add_pasien']['no_hp'] ?></dd>
+                  <dt>Nomor Rekam Medis</dt>
+                  <dd><?php echo $_SESSION['add_pasien']['no_rm'] ?></dd>
+                </dl>
+                <p class="text-danger font-italic"><b>Simpan Nomor Rekam Medis anda!</b></p>
+              </div>
+            </div>
+          </div>
+          <?php unset($_SESSION['add_pasien']); ?>
+        <?php endif ?>
         <div class="container-fluid">
           <div class="card">
             <div class="card-body">
-              <form>
+              <form action="../daftar_baru/" method="post">
                 <div class="form-group">
                   <label for="addNamaPasien">Nama Lengkap</label>
-                  <input type="text" class="form-control" id="addNamaPasien" placeholder="Nama Lengkap" />
+                  <input required name="nama" type="text" class="form-control" id="addNamaPasien" placeholder="Nama Lengkap" />
                 </div>
                 <div class="form-group">
                   <label for="addAlamatPasien">Alamat Tempat Tinggal</label>
-                  <input type="text" class="form-control" id="addAlamatPasien" placeholder="Alamat Tempat Tinggal" />
+                  <input required name="alamat" type="text" class="form-control" id="addAlamatPasien" placeholder="Alamat Tempat Tinggal" />
                 </div>
                 <div class="form-group">
                   <label for="addNoKTPPasien">Nomor KTP</label>
-                  <input type="text" class="form-control" id="addNoKTPPasien" placeholder="Nomor KTP" />
+                  <input required name="no_ktp" type="text" class="form-control" id="addNoKTPPasien" placeholder="Nomor KTP" />
                 </div>
                 <div class="form-group">
                   <label for="addNoHPPasien">Nomor HP</label>
-                  <input type="text" class="form-control" id="addNoHPPasien" placeholder="Nomor HP" />
+                  <input required name="no_hp" type="text" class="form-control" id="addNoHPPasien" placeholder="Nomor HP" />
                 </div>
                 <div class="row">
                   <div class="col">
-                    <button type="submit" class="btn btn-primary">
-                      Daftar
-                    </button>
+                    <input type="submit" name="addPasien" value="Daftar" class="btn btn-primary" />
                   </div>
                 </div>
               </form>
             </div>
           </div>
+          <!-- /.modal -->
         </div><!-- /.container-fluid -->
       </section>
       <!-- /.content -->
@@ -130,6 +182,12 @@
   </div>
   <!-- ./wrapper -->
 
+  <script>
+    // function OpenBootstrapPopup() {
+    //   $("#modal-success").modal('show');
+    // }
+    //
+  </script>
   <!-- jQuery -->
   <script src="../plugins/jquery/jquery.min.js"></script>
   <!-- jQuery UI 1.11.4 -->

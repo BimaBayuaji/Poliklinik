@@ -1,10 +1,19 @@
+<?php
+session_start();
+
+// Check if the user is not authenticated
+if (!isset($_SESSION['dokter_authenticated']) || !$_SESSION['dokter_authenticated']) {
+  header('Location: ../../login/');
+  exit();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dokter - Poliklinik</title>
+  <title>Poliklinik</title>
 
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -31,6 +40,43 @@
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
+  <?php
+  require_once("../../connection.php");
+  if (isset($_POST['addJadwal'])) {
+    $hari = $_POST['hari'];
+    $jammulai = $_POST['jammulai'];
+    $jamselesai = $_POST['jamselesai'];
+    $id_dokter = $_SESSION['id_dokter'];
+
+    $query = mysqli_query($conn, "INSERT INTO jadwal_periksa (id_dokter, hari, jam_mulai, jam_selesai) VALUES ('$id_dokter', '$hari', '$jammulai', '$jamselesai')");
+    if ($query) {
+      header('Refresh:0');
+    } else {
+      header('Refresh:0');
+    }
+  }
+  if (isset($_POST["hapusJadwal"])) {
+    $idJadwal = $_POST["hapusJadwal"];
+    $query = mysqli_query($conn, "DELETE FROM jadwal_periksa WHERE id = $idJadwal");
+    if ($query) {
+      header('Refresh:0');
+    } else {
+      header('Refresh:0');
+    }
+  }
+  if (isset($_POST['editJadwal'])) {
+    $idJadwal = $_POST['idJadwal'];
+    $hari = $_POST['hari'];
+    $jammulai = $_POST['jammulai'];
+    $jamselesai = $_POST['jamselesai'];
+    $query = mysqli_query($conn, "UPDATE jadwal_periksa SET hari = '$hari', jam_mulai = '$jammulai', jam_selesai = '$jamselesai' WHERE id = $idJadwal");
+    if ($query) {
+      header('Refresh:0');
+    } else {
+      header('Refresh:0');
+    }
+  };
+  ?>
   <div class="wrapper">
 
     <!-- Preloader -->
@@ -55,7 +101,7 @@
       <a href="../../dokter" class="brand-link">
         <img src="https://cdn-icons-png.flaticon.com/512/6069/6069189.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
         <!-- <i class="nav-icon fas fa-user-tie brand-image"></i> -->
-        <span class="brand-text font-weight-light">Halaman Dokter</span>
+        <span class="brand-text font-weight-light">Dokter</span>
       </a>
 
       <!-- Sidebar -->
@@ -75,7 +121,7 @@
               <a href="../../dokter/riwayat_pasien" class="nav-link">
                 <i class="nav-icon fas fa-notes-medical"></i>
                 <p>
-                  Riwayat Pasien
+                  Riwayat Periksa
                 </p>
               </a>
             </li>
@@ -83,7 +129,7 @@
               <a href="../../dokter/profil_dokter" class="nav-link">
                 <i class="nav-icon fas fa-user-doctor"></i>
                 <p>
-                  Profil(x)
+                  Profil
                 </p>
               </a>
             </li>
@@ -95,12 +141,12 @@
       <div class="sidebar sidebar-custom">
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
           <li class="nav-item">
-            <a href="#" class="nav-link">
-              <i class="fas fa-right-from-bracket"></i>
-              <p>
-                Logout
-              </p>
-            </a>
+            <form method="post" action="../../login/logout.php">
+              <button class="btn nav-link btn-link text-dark d-flex justify-content-start align-items-center">
+                <i class="fas fa-right-from-bracket mr-1"></i>
+                <p>Logout</p>
+              </button>
+            </form>
           </li>
         </ul>
       </div>
@@ -125,7 +171,7 @@
           <div class="row">
             <div class="col-12">
               <div class="card">
-                <div class="card-body table-responsive p-0">
+                <div class="card-body p-0">
                   <table class="table table-hover text-nowrap">
                     <thead>
                       <tr>
@@ -133,37 +179,45 @@
                         <th>Hari</th>
                         <th>Jam Mulai</th>
                         <th>Jam Selesai</th>
-                        <th>Aksi</th>
+                        <th style="width: 160px;">Aksi</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td>1</td>
-                        <td>Senin-Jumat</td>
-                        <td>10.00</td>
-                        <td>17.00</td>
-                        <td>
-                          <div class="margin">
-                            <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#modal-editDokter">
+                      <?php
+                      $id_dokter = $_SESSION['id_dokter'];
+                      require("../../connection.php");
+                      $query = mysqli_query($conn, "SELECT * FROM jadwal_periksa WHERE id_dokter = $id_dokter");
+                      $jumlah = mysqli_num_rows($query);
+                      ?>
+                      <?php while ($row = mysqli_fetch_array($query)) : ?>
+                        <tr>
+                          <td>1</td>
+                          <td><?php echo $row['hari'] ?></td>
+                          <td><?php echo substr($row['jam_mulai'], 0, 5) ?></td>
+                          <td><?php echo substr($row['jam_selesai'], 0, 5) ?></td>
+                          <td>
+                            <button type="button" value="<?php echo $row['id'] ?>" class="buttonEdit2 btn btn-warning btn-block mb-2" data-toggle="modal" data-target="#modal-editDokter">
                               <i class="fa fa-pen"></i> Edit
                             </button>
-                            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal-sm">
+                            <button type="button" value="<?php echo $row['id'] ?>" class="buttonHapus2 btn btn-danger btn-block text-nowrap" data-toggle="modal" data-target="#modal-sm">
                               <i class="fa fa-trash"></i> Hapus
                             </button>
-                          </div>
-                        </td>
-                      </tr>
+                          </td>
+                        </tr>
+                      <?php endwhile ?>
                     </tbody>
                   </table>
                 </div>
                 <!-- /.card-body -->
-                <div class="card-footer clearfix">
-                  <dic class="m-0 float-right">
-                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-addDokter">
-                      <i class="fa fa-plus"></i> Tambah
-                    </button>
-                  </dic>
-                </div>
+                <?php if ($jumlah == 0) : ?>
+                  <div class="card-footer clearfix">
+                    <dic class="m-0 float-right">
+                      <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-addDokter">
+                        <i class="fa fa-plus"></i> Tambah
+                      </button>
+                    </dic>
+                  </div>
+                <?php endif ?>
               </div>
               <!-- /.card -->
             </div>
@@ -183,7 +237,7 @@
                 </div>
                 <div class="modal-footer justify-content-between">
                   <button type="button" class="btn btn-default" data-dismiss="modal">Tutup</button>
-                  <button type="button" class="btn btn-danger toastrDefaultSuccess" data-dismiss="modal">Hapus</button>
+                  <button type="button" class="buttonHapus btn btn-danger toastrDefaultSuccess" data-dismiss="modal">Hapus</button>
                 </div>
               </div>
               <!-- /.modal-content -->
@@ -202,25 +256,24 @@
                   </button>
                 </div>
                 <div class="modal-body">
-                  <form>
+                  <form action="../../dokter/jadwal_praktek/" method="post">
                     <div class="form-group">
                       <label for="addHari">Hari</label>
-                      <select class="custom-select rounded-0" id="addHari">
-                        <option>-------</option>
-                        <option>Senin</option>
-                        <option>Selasa</option>
-                        <option>Rabu</option>
-                        <option>Kamis</option>
-                        <option>Jumat</option>
-                        <option>Sabtu</option>
-                        <option>Senin-Jumat</option>
-                        <!-- <option>Minggu</option> -->
+                      <select onchange="console.log(this.value)" required name="hari" class="custom-select rounded-0" id="addHari">
+                        <option value="">-------</option>
+                        <option value="Senin">Senin</option>
+                        <option value="Selasa">Selasa</option>
+                        <option value="Rabu">Rabu</option>
+                        <option value="Kamis">Kamis</option>
+                        <option value="Jumat">Jumat</option>
+                        <option value="Sabtu">Sabtu</option>
+                        <option value="Minggu">Minggu</option>
                       </select>
                     </div>
                     <div class="form-group">
                       <label>Jam Mulai</label>
                       <div class="input-group date" id="jammulai" data-target-input="nearest">
-                        <input type="text" class="form-control datetimepicker-input" id="jammulai" data-toggle="datetimepicker" data-target="#jammulai" placeholder="jj:mm" />
+                        <input required name="jammulai" type="text" class="form-control datetimepicker-input" id="jammulai" data-toggle="datetimepicker" data-target="#jammulai" placeholder="jj:mm" />
                         <div class="input-group-append" data-target="#jammulai" data-toggle="datetimepicker">
                           <div class="input-group-text"><i class="fa fa-calendar"></i></div>
                         </div>
@@ -229,7 +282,7 @@
                     <div class="form-group">
                       <label>Jam Selesai</label>
                       <div class="input-group date" id="jamselesai" data-target-input="nearest">
-                        <input type="text" class="form-control datetimepicker-input" id="jamselesai" data-toggle="datetimepicker" data-target="#jamselesai" placeholder="jj:mm" />
+                        <input required name="jamselesai" type="text" class="form-control datetimepicker-input" id="jamselesai" data-toggle="datetimepicker" data-target="#jamselesai" placeholder="jj:mm" />
                         <div class="input-group-append" data-target="#jamselesai" data-toggle="datetimepicker">
                           <div class="input-group-text"><i class="fa fa-calendar"></i></div>
                         </div>
@@ -239,9 +292,7 @@
                       <button type="button" class="btn btn-default" data-dismiss="modal">
                         Tutup
                       </button>
-                      <button type="submit" class="btn btn-primary float-right">
-                        Tambah
-                      </button>
+                      <input type="submit" name="addJadwal" value="Tambah" class="btn btn-primary float-right" />
                     </div>
                   </form>
                 </div>
@@ -262,24 +313,28 @@
                   </button>
                 </div>
                 <div class="modal-body">
-                  <form>
+                  <form action="../../dokter/jadwal_praktek/" method="post">
+                    <div class="form-group">
+                      <label for="idJadwal">ID</label>
+                      <input name="idJadwal" type="text" class="form-control" id="idJadwal" placeholder="ID Jadwal" readonly />
+                    </div>
                     <div class="form-group">
                       <label for="addHariEdit">Hari</label>
-                      <select class="custom-select rounded-0" id="addHariEdit">
-                        <option>-------</option>
-                        <option>Senin</option>
-                        <option selected>Selasa</option>
-                        <option>Rabu</option>
-                        <option>Kamis</option>
-                        <option>Jumat</option>
-                        <option>Sabtu</option>
-                        <!-- <option>Minggu</option> -->
+                      <select required name="hari" class="custom-select rounded-0" id="hariEdit">
+                        <option value="">-------</option>
+                        <option value="Senin">Senin</option>
+                        <option value="Selasa">Selasa</option>
+                        <option value="Rabu">Rabu</option>
+                        <option value="Kamis">Kamis</option>
+                        <option value="Jumat">Jumat</option>
+                        <option value="Sabtu">Sabtu</option>
+                        <option value="Minggu">Minggu</option>
                       </select>
                     </div>
                     <div class="form-group">
                       <label>Jam Mulai</label>
-                      <div class="input-group date" id="jammulaiedit" data-target-input="nearest">
-                        <input type="text" class="form-control datetimepicker-input" id="jammulaiedit" data-toggle="datetimepicker" data-target="#jammulaiedit" placeholder="jj:mm" value="10:00" />
+                      <div class="input-group date" data-target-input="nearest">
+                        <input required name="jammulai" type="text" class="form-control datetimepicker-input" id="jammulaiedit" data-toggle="datetimepicker" data-target="#jammulaiedit" placeholder="jj:mm" />
                         <div class="input-group-append" data-target="#jammulaiedit" data-toggle="datetimepicker">
                           <div class="input-group-text"><i class="fa fa-calendar"></i></div>
                         </div>
@@ -287,8 +342,8 @@
                     </div>
                     <div class="form-group">
                       <label>Jam Selesai</label>
-                      <div class="input-group date" id="jamselesaiedit" data-target-input="nearest">
-                        <input type="text" class="form-control datetimepicker-input" id="jamselesaiedit" data-toggle="datetimepicker" data-target="#jamselesaiedit" placeholder="jj:mm" value="17:00" />
+                      <div class="input-group date" data-target-input="nearest">
+                        <input required name="jamselesai" type="text" class="form-control datetimepicker-input" id="jamselesaiedit" data-toggle="datetimepicker" data-target="#jamselesaiedit" placeholder="jj:mm" />
                         <div class="input-group-append" data-target="#jamselesaiedit" data-toggle="datetimepicker">
                           <div class="input-group-text"><i class="fa fa-calendar"></i></div>
                         </div>
@@ -298,9 +353,7 @@
                       <button type="button" class="btn btn-default" data-dismiss="modal">
                         Tutup
                       </button>
-                      <button type="submit" class="btn btn-warning float-right">
-                        Edit
-                      </button>
+                      <input type="submit" name="editJadwal" value="Edit" class="btn btn-warning float-right" />
                     </div>
                   </form>
                 </div>
@@ -355,13 +408,68 @@
   <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
   <script src="../../dist/js/pages/dashboard.js"></script>
   <script>
+    $("#jammulai").on("input", function() {
+      // Print entered value in a div box
+      console.log($(this).val())
+    });
+    $('.buttonHapus2').click(function() {
+      selectedId = $(this).val();
+      console.log(selectedId);
+    })
+    $('.buttonHapus').click(function() {
+      var clickBtnValue = selectedId;
+      var ajaxurl = '../../dokter/jadwal_praktek/';
+      data = {
+        'hapusJadwal': clickBtnValue
+      };
+      $.post(ajaxurl, data, function(response) {
+        location.reload();
+      });
+    })
+    $('.buttonEdit2').click(function() {
+      selectedId = $(this).val();
+      $.ajax({
+        url: 'jadwalJSON.php',
+        type: 'GET',
+        data: {
+          id: selectedId
+        },
+        dataType: 'json',
+        success: function(data) {
+          let jammulai = data.jam_mulai.slice(0, -3);
+          let jamselesai = data.jam_selesai.slice(0, -3);
+          console.log(jammulai, jamselesai);
+          $('#idJadwal').val(data.id);
+          $('#hariEdit').val(data.hari);
+          $('#jammulaiedit').val(jammulai);
+          $('#jamselesaiedit').val(jamselesai);
+          console.log(data);
+        },
+        error: function(error) {
+          console.log('Error fetching data: ' + error);
+        },
+      })
+      console.log(selectedId);
+    })
     $(function() {
       //Date picker
       $('#jammulai').datetimepicker({
         format: 'HH:mm',
         pickDate: false,
         pickSeconds: false,
-        pick12HourFormat: false
+        pick12HourFormat: false,
+        // disabledTimeIntervals: [
+        //   [moment({
+        //     h: 0
+        //   }), moment({
+        //     h: 8
+        //   })],
+        //   [moment({
+        //     h: 18
+        //   }), moment({
+        //     h: 24
+        //   })]
+        // ],
       });
       $('#jammulaiedit').datetimepicker({
         format: 'HH:mm',
@@ -373,7 +481,7 @@
         format: 'HH:mm',
         pickDate: false,
         pickSeconds: false,
-        pick12HourFormat: false
+        pick12HourFormat: false,
       });
       $('#jamselesaiedit').datetimepicker({
         format: 'HH:mm',

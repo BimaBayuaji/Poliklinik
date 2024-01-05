@@ -76,6 +76,18 @@
         </nav>
         <!-- /.sidebar-menu -->
       </div>
+      <!-- /.sidebar -->
+      <div class="sidebar sidebar-custom">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+          <li class="nav-item">
+          <a href="login" class="nav-link">
+                <p>
+                  Login
+                </p>
+              </a>
+          </li>
+        </ul>
+      </div>
     </aside>
 
     <!-- Content Wrapper. Contains page content -->

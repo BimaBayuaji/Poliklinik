@@ -1,3 +1,51 @@
+<?php
+session_start();
+
+if ($_SESSION) {
+  if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated']) {
+    header('Location: ../admin/');
+    exit();
+  } elseif (isset($_SESSION['dokter_authenticated']) && $_SESSION['dokter_authenticated']) {
+    header('Location: ../dokter/');
+    exit();
+  } else {
+    null;
+  }
+}
+
+require_once("../connection.php");
+$queryDokter = mysqli_query($conn, "SELECT * FROM dokter ORDER BY id ASC");
+
+// Check if the form is submitted
+if (isset($_POST['loginAdmin'])) {
+  $username = $_POST['usernameAdmin'];
+  $password = $_POST['passwordAdmin'];
+
+  // Validate credentials (replace this with your authentication logic)
+  if ($username == 'admin' && $password == 'admin123') {
+    $_SESSION['admin_authenticated'] = true;
+    header('Location: ../admin/');
+    exit();
+  } else {
+    $error = "Invalid credentials";
+  }
+}
+if (isset($_POST['loginDokter'])) {
+  $no_hp = $_POST['noHPDokter'];
+  $password = $_POST['passwordDokter'];
+  while ($row = mysqli_fetch_array($queryDokter)) {
+    if ($no_hp == $row['no_hp'] && $password == $row['password']) {
+      $_SESSION['dokter_authenticated'] = true;
+      $_SESSION['id_dokter'] = $row['id'];
+      header('Location: ../dokter/');
+      exit();
+    } else {
+      $error = "Invalid credentials";
+    }
+  }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -35,9 +83,9 @@
         <div class="tab-content" id="custom-tabs-one-tabContent">
           <div class="tab-pane fade show active" id="custom-tabs-one-admin" role="tabpanel" aria-labelledby="custom-tabs-one-admin-tab">
             <p class="login-box-msg" style="margin-top: 10px">Masuk sebagai Admin</p>
-            <form>
+            <form action="../login/" method="post">
               <div class="input-group mb-3">
-                <input type="email" class="form-control" placeholder="Email">
+                <input required name="usernameAdmin" type="text" class="form-control" placeholder="Username">
                 <div class="input-group-append">
                   <div class="input-group-text">
                     <span class="fas fa-envelope"></span>
@@ -45,7 +93,7 @@
                 </div>
               </div>
               <div class="input-group mb-3">
-                <input type="password" class="form-control" placeholder="Password">
+                <input required name="passwordAdmin" type="password" class="form-control" placeholder="Password">
                 <div class="input-group-append">
                   <div class="input-group-text">
                     <span class="fas fa-lock"></span>
@@ -54,7 +102,7 @@
               </div>
               <div class="row">
                 <div class="col">
-                  <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+                  <input type="submit" name="loginAdmin" value="Login" class="btn btn-primary btn-block" />
                 </div>
                 <!-- /.col -->
               </div>
@@ -62,17 +110,17 @@
           </div>
           <div class="tab-pane fade" id="custom-tabs-one-dokter" role="tabpanel" aria-labelledby="custom-tabs-one-dokter-tab">
             <p class="login-box-msg" style="margin-top: 10px">Masuk sebagai Dokter</p>
-            <form>
+            <form action="../login/" method="post">
               <div class="input-group mb-3">
-                <input type="email" class="form-control" placeholder="Email">
+                <input required type="phone" name="noHPDokter" class="form-control" placeholder="No HP">
                 <div class="input-group-append">
                   <div class="input-group-text">
-                    <span class="fas fa-envelope"></span>
+                    <span class="fas fa-phone-square"></span>
                   </div>
                 </div>
               </div>
               <div class="input-group mb-3">
-                <input type="password" class="form-control" placeholder="Password">
+                <input required type="password" name="passwordDokter" class="form-control" placeholder="Password">
                 <div class="input-group-append">
                   <div class="input-group-text">
                     <span class="fas fa-lock"></span>
@@ -81,12 +129,15 @@
               </div>
               <div class="row">
                 <div class="col">
-                  <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+                  <input type="submit" name="loginDokter" value="Login" class="btn btn-primary btn-block" />
                 </div>
                 <!-- /.col -->
               </div>
             </form>
           </div>
+          <?php if (isset($error)) : ?>
+            <p class="text-danger mt-2"><?php echo 'Kredensial salah' ?></p>
+          <?php endif; ?>
         </div>
 
       </div>

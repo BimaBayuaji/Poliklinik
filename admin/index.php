@@ -1,10 +1,20 @@
+<?php
+session_start();
+
+// Check if the user is not authenticated
+if (!isset($_SESSION['admin_authenticated']) || !$_SESSION['admin_authenticated']) {
+  header('Location: ../login/');
+  exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin - Poliklinik</title>
+  <title>Poliklinik</title>
 
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -53,7 +63,7 @@
       <a href="../admin" class="brand-link">
         <img src="https://w7.pngwing.com/pngs/429/434/png-transparent-computer-icons-icon-design-business-administration-admin-icon-hand-monochrome-silhouette.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
         <!-- <i class="nav-icon fas fa-user-tie brand-image"></i> -->
-        <span class="brand-text font-weight-light">Halaman Admin</span>
+        <span class="brand-text font-weight-light">Admin</span>
       </a>
 
       <!-- Sidebar -->
@@ -101,12 +111,12 @@
       <div class="sidebar sidebar-custom">
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
           <li class="nav-item">
-            <a href="#" class="nav-link">
-              <i class="fas fa-right-from-bracket"></i>
-              <p>
-                Logout
-              </p>
-            </a>
+            <form method="post" action="../login/logout.php">
+              <button class="btn nav-link btn-link text-dark d-flex justify-content-start align-items-center">
+                <i class="fas fa-right-from-bracket mr-1"></i>
+                <p>Logout</p>
+              </button>
+            </form>
           </li>
         </ul>
       </div>
@@ -128,13 +138,24 @@
       <!-- Main content -->
       <section class="content">
         <div class="container-fluid">
+          <?php
+          require("../connection.php");
+          $querydokter = mysqli_query($conn, "SELECT * FROM dokter ORDER BY id ASC");
+          $querypoli = mysqli_query($conn, "SELECT * FROM poli ORDER BY id ASC");
+          $querypasien = mysqli_query($conn, "SELECT * FROM pasien ORDER BY id ASC");
+          $queryobat = mysqli_query($conn, "SELECT * FROM obat ORDER BY id ASC");
+          $dokter = mysqli_num_rows($querydokter);
+          $poli = mysqli_num_rows($querypoli);
+          $pasien = mysqli_num_rows($querypasien);
+          $obat = mysqli_num_rows($queryobat);
+          ?>
           <!-- Small boxes (Stat box) -->
           <div class="row">
             <div class="col-lg-3 col-6">
               <!-- small box -->
               <div class="small-box bg-info">
                 <div class="inner">
-                  <h3>1</h3>
+                  <h3><?php echo $dokter ?></h3>
 
                   <p>Dokter</p>
                 </div>
@@ -149,7 +170,7 @@
               <!-- small box -->
               <div class="small-box bg-success">
                 <div class="inner">
-                  <h3>0</h3>
+                  <h3><?php echo $poli ?></h3>
 
                   <p>Poli</p>
                 </div>
@@ -164,14 +185,14 @@
               <!-- small box -->
               <div class="small-box bg-warning">
                 <div class="inner">
-                  <h3>1</h3>
+                  <h3><?php echo $pasien ?></h3>
 
                   <p>Pasien Terdaftar</p>
                 </div>
                 <div class="icon">
                   <i class="fas fa-hospital-user"></i>
                 </div>
-                <a href="Kelola_pasien" class="small-box-footer">Kelola Pasien <i class="fas fa-arrow-circle-right"></i></a>
+                <a href="kelola_pasien" class="small-box-footer">Kelola Pasien <i class="fas fa-arrow-circle-right"></i></a>
               </div>
             </div>
             <!-- ./col -->
@@ -179,7 +200,7 @@
               <!-- small box -->
               <div class="small-box bg-danger">
                 <div class="inner">
-                  <h3>1</h3>
+                  <h3><?php echo $obat ?></h3>
 
                   <p>Obat</p>
                 </div>
