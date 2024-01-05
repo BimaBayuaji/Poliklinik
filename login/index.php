@@ -52,7 +52,7 @@ if (isset($_POST['loginDokter'])) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login Staff - Capstone</title>
+  <title>Poliklinik</title>
 
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -146,7 +146,10 @@ if (isset($_POST['loginDokter'])) {
     <!-- /.card -->
   </div>
   <!-- /.login-box -->
-
+  <!-- Tombol di pojok kiri bawah -->
+<a href="../../bk_poli" class="btn btn-primary" style="position: fixed; bottom: 10px; left: 10px;">
+  <i class="fas fa-sign-out-alt"></i> Kembali
+</a>
   <!-- jQuery -->
   <script src="../plugins/jquery/jquery.min.js"></script>
   <!-- Bootstrap 4 -->
